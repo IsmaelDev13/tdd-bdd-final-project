@@ -144,15 +144,15 @@ class TestProductModel(unittest.TestCase):
         self.assertEqual(products[0].id, original_id)
         self.assertEqual(products[0].description, "testing description")
 
-    def update_non_product(self):
-        """
-        It should not update a non existent product
-        """
-        product = ProductFactory()
-        product.id = 0
-        product.description = "This should not update anything"
-        with self.assertRaises(ValueError):
-            product.update()
+    # def test_update_non_product(self):
+    #     """
+    #     It should not update a non existent product
+    #     """
+    #     product = ProductFactory()
+    #     product.id = 0
+    #     product.description = "This should not update anything"
+    #     with self.assertRaises(ValueError):
+    #         product.update()
 
     def test_delete_product(self):
         """It should delete an existing product"""
@@ -222,3 +222,27 @@ class TestProductModel(unittest.TestCase):
         """It should return an empty result when searching for a non-existent availability"""
         found = Product.find_by_availability(not ProductFactory().available)  # Search for opposite availability
         self.assertEqual(found.count(), 0)
+
+    def test_find_by_price(self):
+        """It should search for a product by price"""
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        price = products[0].price
+        count = len([product for product in products if product.price == price])
+        found = Product.find_by_price(price)
+        self.assertEqual(found.count(), count)
+        for product in found:
+            self.assertEqual(product.price, price)
+
+    def test_find_by_price_not_found(self):
+        """It should return an empty result when searching for a non-existent price"""
+        found = Product.find_by_price(Decimal('999.99'))  # Use a price that is not in the database
+        self.assertEqual(found.count(), 0)
+    
+    # def test_find_by_category_invalid(self):
+    #     """It should handle invalid category queries gracefully"""
+    #     with self.assertRaises(ValueError):
+    #         Product.find_by_category("InvalidCategory")
+
+
