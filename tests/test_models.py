@@ -104,3 +104,121 @@ class TestProductModel(unittest.TestCase):
     #
     # ADD YOUR TEST CASES HERE
     #
+    def test_read_product(self):
+        """
+        It should read an existing product
+        """
+        product = ProductFactory()
+        product.id = None
+        product.create()
+        self.assertIsNotNone(product.id)
+        # Fetch it back
+        found_product = Product.find(product.id)
+
+        self.assertEqual(product.id, found_product.id)
+        self.assertEqual(product.name, found_product.name)
+        self.assertEqual(product.description, found_product.description)
+        self.assertEqual(product.price, found_product.price)
+
+    def test_read_nonexistent_product(self):
+        """It should return None"""
+        product = Product.find(0)
+        self.assertIsNone(product)
+
+    def test_update_product(self):
+        """
+        It should update an existing product
+        """
+        product = ProductFactory()
+        product.id = None
+        product.create()
+        self.assertIsNotNone(product.id)
+        # Change it an save it
+        product.description = "testing description"
+        original_id = product.id
+        product.update()
+        self.assertEqual(product.id, original_id)
+        self.assertEqual(product.description, "testing description")
+        products = Product.all()
+        self.assertEqual(len(products), 1)
+        self.assertEqual(products[0].id, original_id)
+        self.assertEqual(products[0].description, "testing description")
+
+    def update_non_product(self):
+        """
+        It should not update a non existent product
+        """
+        product = ProductFactory()
+        product.id = 0
+        product.description = "This should not update anything"
+        with self.assertRaises(ValueError):
+            product.update()
+
+    def test_delete_product(self):
+        """It should delete an existing product"""
+        product = ProductFactory()
+        product.create()
+        self.assertEqual(len(Product.all()), 1)
+
+        product.delete()
+        self.assertEqual(len(Product.all()), 0)
+
+    def test_list_products(self):
+        """It should list all products"""
+        # Add multiple products
+        products = Product.all()
+        self.assertEqual(products, [])
+        for _ in range(5):
+            product = ProductFactory()
+            product.create()
+        products = Product.all()
+        self.assertEqual(len(products), 5)
+
+    def test_find_by_name(self):
+        """It should search for a product by Name"""
+        products = ProductFactory.create_batch(5)
+        for product in products:
+            product.create()
+        name = products[0].name
+        count = len([product for product in products if product.name == name])
+        found = Product.find_by_name(name)
+        self.assertEqual(found.count(), count)
+        for product in found:
+            self.assertEqual(product.name, name)
+
+    def test_find_by_name_not_found(self):
+        """It should return an empty result when searching for a non-existent name"""
+        found = Product.find_by_name("NonExistentName")
+        self.assertEqual(found.count(), 0)
+
+    def test_find_by_category(self):
+        """It should search for a product by category"""
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        category = products[0].category
+        count = len([product for product in products if product.category == category])
+        found = Product.find_by_category(category)
+        self.assertEqual(found.count(), count)
+        for product in found:
+            self.assertEqual(product.category, category)
+
+    def test_find_by_availability(self):
+        """
+        It should search for a product by availability
+        """
+        products = ProductFactory.create_batch(10)
+        for product in products:
+            product.create()
+        available = products[0].available
+
+        count = len([product for product in products if product.available == available])
+        found = Product.find_by_availability(available)
+        self.assertEqual(found.count(), count)
+        for product in found:
+            self.assertEqual(product.available, available)
+
+    def test_find_by_availability_not_found(self):
+        """It should return an empty result when searching for a non-existent availability"""
+        found = Product.find_by_availability(not ProductFactory().available)  # Search for opposite availability
+        self.assertEqual(found.count(), 0)
